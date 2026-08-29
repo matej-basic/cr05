@@ -1,0 +1,134 @@
+---
+# Deploys the passkey files and the six Verify-Lab*.sh scripts, and wires the read-only
+# cross-host probe so a script on one host can confirm a control on its peer without a
+# password and without any writable privilege.
+#
+# Per-host ownership comes from host_vars `verify_labs`:
+#   ubuntu-ws  -> a1, c1     rhel-srv -> b1, d1, e1     logstation -> f1
+# lab_passkeys (defaults) maps each lab to its passkey path and the literal answer string,
+# which must stay identical to training_definition.json.
+
+- name: Ensure the scripts directory exists
+  ansible.builtin.file:
+    path: "{{ scripts_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Ensure secure_user exists (owns the B1 passkey home)
+  ansible.builtin.user:
+    name: "{{ secure_user }}"
+    password: "{{ secure_user_password | password_hash('sha512') }}"
+    shell: /usr/sbin/nologin
+    state: present
+  when: inventory_hostname == 'rhel-srv'
+
+# --- Read-only cross-host probe (on every host that owns or answers a check) -----------
+- name: Deploy the read-only verification probe
+  ansible.builtin.copy:
+    src: verify-probe.sh
+    dest: "{{ scripts_dir }}/verify-probe.sh"
+    owner: root
+    group: root
+    mode: "0755"
+  when: "'attacker' not in group_names"
+
+- name: Allow engineer to run only the probe via passwordless sudo
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/verify-probe
+    content: |
+      # Lab infrastructure: engineer may run the read-only verification probe without a
+      # password so a peer host's Verify-Lab*.sh can confirm a control here. The probe
+      # changes nothing, so this grants no privilege beyond reading state.
+      {{ engineer_user }} ALL=(root) NOPASSWD: {{ scripts_dir }}/verify-probe.sh
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "/usr/sbin/visudo -cf %s"
+  when: "'attacker' not in group_names"
+
+# --- SSH trust for the cross-host checks (initiators: ubuntu-ws, rhel-srv) -------------
+- name: Ensure root's SSH directory exists on the check initiators
+  ansible.builtin.file:
+    path: /root/.ssh
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  when: verify_peer_host is defined
+
+- name: Generate root's verification key on the check initiators
+  ansible.builtin.command:
+    cmd: ssh-keygen -t ed25519 -N '' -C "cr05-verify" -f /root/.verify_key
+    creates: /root/.verify_key
+  when: verify_peer_host is defined
+
+- name: Read back the verification public key
+  ansible.builtin.slurp:
+    src: /root/.verify_key.pub
+  register: verify_pub_slurp
+  when: verify_peer_host is defined
+
+- name: Publish the public key as a fact
+  ansible.builtin.set_fact:
+    verify_pubkey: "{{ verify_pub_slurp.content | b64decode | trim }}"
+  when: verify_peer_host is defined
+
+- name: Ensure engineer's SSH directory exists on the check initiators
+  ansible.builtin.file:
+    path: "/home/{{ engineer_user }}/.ssh"
+    state: directory
+    owner: "{{ engineer_user }}"
+    group: "{{ engineer_user }}"
+    mode: "0700"
+  when: verify_peer_host is defined
+
+- name: Authorize the peer initiator's key for engineer (enables the peer probe)
+  ansible.builtin.lineinfile:
+    path: "/home/{{ engineer_user }}/.ssh/authorized_keys"
+    line: "{{ hostvars[verify_peer_host].verify_pubkey }}"
+    create: true
+    owner: "{{ engineer_user }}"
+    group: "{{ engineer_user }}"
+    mode: "0600"
+  when:
+    - verify_peer_host is defined
+    - hostvars[verify_peer_host].verify_pubkey is defined
+
+- name: Drop the verify.env peer configuration for the local scripts
+  ansible.builtin.template:
+    src: verify.env.j2
+    dest: "{{ scripts_dir }}/verify.env"
+    owner: root
+    group: root
+    mode: "0644"
+  when: verify_labs | default([]) | length > 0
+
+# --- Passkey files and scripts (only the labs this host owns) --------------------------
+- name: Create the passkey parent directories
+  ansible.builtin.file:
+    path: "{{ lab_passkeys[item].path | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+  loop: "{{ verify_labs | default([]) }}"
+
+- name: Write the passkey files (literal answer strings; must match training_definition.json)
+  ansible.builtin.copy:
+    dest: "{{ lab_passkeys[item].path }}"
+    content: "{{ lab_passkeys[item].value }}\n"
+    owner: root
+    group: root
+    mode: "0400"
+  loop: "{{ verify_labs | default([]) }}"
+
+- name: Deploy the verification scripts this host owns
+  ansible.builtin.copy:
+    src: "Verify-Lab{{ item | upper }}.sh"
+    dest: "{{ scripts_dir }}/Verify-Lab{{ item | upper }}.sh"
+    owner: root
+    group: root
+    mode: "0750"
+  loop: "{{ verify_labs | default([]) }}"

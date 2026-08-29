@@ -1,0 +1,5 @@
+---
+hostname: logstation
+# Lab F1 runs its verification script here.
+verify_labs:
+  - f1

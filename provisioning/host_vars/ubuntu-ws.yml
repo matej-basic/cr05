@@ -1,0 +1,10 @@
+---
+hostname: ubuntu-ws
+# Verification scripts and passkey files this host owns (labs whose Lab Completion
+# names ubuntu-ws as the host to run the script on).
+verify_labs:
+  - a1
+  - c1
+# Peer host that the cross-host checks in A1 and C1 reach over SSH.
+verify_peer_host: rhel-srv
+verify_peer_ip: 10.10.10.5

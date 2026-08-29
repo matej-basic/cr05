@@ -1,0 +1,42 @@
+---
+# CADMUS CR-05 provisioning. One play per topology group so roles compose.
+#
+# The sandbox ships deliberately UNHARDENED: the learner does the hardening in labs A1-F1.
+# The seed_weaknesses role installs the specific findings the labs fix; it never hardens.
+# ubuntu-ref is left at distribution defaults (no seed_weaknesses) as the E1 comparison host.
+
+- name: Base configuration on every node
+  hosts: all
+  become: true
+  roles:
+    - common
+
+- name: Compliance scanner on every scan target
+  hosts: targets
+  become: true
+  roles:
+    - compliance_tools
+
+- name: Seed the deliberate findings on the two hardening targets
+  hosts: hardening-targets
+  become: true
+  roles:
+    - seed_weaknesses
+
+- name: Attacker tooling on the test client
+  hosts: attacker
+  become: true
+  roles:
+    - attacker_tools
+
+- name: Incident dataset and off-host log receiver on the log station
+  hosts: logstation
+  become: true
+  roles:
+    - log_dataset
+
+- name: Passkey files and verification scripts
+  hosts: all
+  become: true
+  roles:
+    - passkeys

@@ -1,0 +1,5 @@
+---
+collected_dir: /var/log/collected
+remote_log_dir: /var/log/remote
+# The attacker client's lab-segment address, source of the seeded brute force.
+attacker_lab_ip: "10.10.20.6"

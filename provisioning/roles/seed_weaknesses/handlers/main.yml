@@ -1,0 +1,9 @@
+---
+- name: restart ssh
+  ansible.builtin.service:
+    name: "{{ 'ssh' if ansible_os_family == 'Debian' else 'sshd' }}"
+    state: restarted
+
+- name: reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true

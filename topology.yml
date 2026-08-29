@@ -1,0 +1,188 @@
+# CADMUS CR-05 — Linux OS Security Hardening and Compliance Validation
+# Shared sandbox topology, exercised by labs A1 through F1.
+#
+# Source of truth: this file is derived from cr05/labs/lab_env_description.md, which
+# is the authored topology for the course. The Scenario Framework docx left its
+# "Network Topology & Traffic Flow" heading empty, so the environment was designed in
+# the env description and this file mirrors it, extended with the ubuntu-ref reference
+# host that lab E1 scans alongside rhel-srv.
+#
+# Two networks:
+#   access  10.10.10.0/24  management path; every VM has an interface here
+#   lab     10.10.20.0/24  production-like segment where controls are tested from outside
+# Host IPs start at .4 (.1 gateway and .2 DHCP are reserved by OpenStack; .3 kept free).
+
+name: cadmus-cr05-linux-hardening
+
+hosts:
+  - name: ubuntu-ws
+    base_box:
+      image: ubuntu-noble-x86_64
+      mgmt_user: ubuntu
+      mgmt_protocol: ssh
+    flavor: standard.medium          # primary hardening target; runs the scanner
+
+  - name: rhel-srv
+    # IMAGE REQUEST REQUIRED. As of 14 Aug 2026 the platform image catalogue holds NO
+    # Red Hat-family image (no RHEL, Rocky, or Alma). This host must be Red Hat-family 9:
+    # the course exercises it hands-on with `firewall-cmd`/`firewalld` and `dnf` (lab C1)
+    # and teaches SELinux enforcing mode on it (node N2), none of which exist on Ubuntu.
+    # An Ubuntu substitute would break labs C1 and the N2/N5 two-distro material.
+    #   Recommended: request Rocky Linux 9 or AlmaLinux 9 (binary-compatible with RHEL 9,
+    #   no subscription needed; the labs use no subscription-manager). Request genuine
+    #   RHEL 9 only if RHEL branding is wanted.
+    # ACTION: once the image is loaded, set `image` below to its exact registered name
+    #   (e.g. rocky-9-x86_64, almalinux-9-x86_64, or rhel-9-x86_64) and, for a non-RHEL
+    #   image, set `mgmt_user` to that cloud image's default user (rocky / almalinux).
+    base_box:
+      image: rhel-9-x86_64           # placeholder: replace with the loaded Red Hat-family 9 image name
+      mgmt_user: cloud-user          # RHEL/Rocky/Alma cloud default is cloud-user (rocky/almalinux on some builds)
+      mgmt_protocol: ssh
+    flavor: standard.medium
+
+  - name: ubuntu-ref
+    base_box:
+      image: ubuntu-noble-x86_64
+      mgmt_user: ubuntu
+      mgmt_protocol: ssh
+    flavor: standard.small           # kept at distribution defaults; the unhardened
+                                     # comparison target scanned in lab E1
+
+  - name: attacker
+    base_box:
+      image: ubuntu-noble-x86_64     # course allows "Kali Linux, or Ubuntu 24.04 minimal";
+      mgmt_user: ubuntu              # Ubuntu + the attacker_tools role avoids a Kali base-box
+      mgmt_protocol: ssh             # deviation while giving the same tooling
+    flavor: standard.small
+
+  - name: logstation
+    base_box:
+      image: ubuntu-noble-x86_64
+      mgmt_user: ubuntu
+      mgmt_protocol: ssh
+    flavor: standard.small           # holds the F1 incident dataset; off the lab segment
+
+routers:
+  - name: r-access
+    base_box:
+      image: debian-12-x86_64
+      mgmt_user: debian
+      mgmt_protocol: ssh
+    flavor: standard.small
+
+  - name: r-lab
+    base_box:
+      image: debian-12-x86_64
+      mgmt_user: debian
+      mgmt_protocol: ssh
+    flavor: standard.small
+
+wan:
+  name: wan
+  cidr: 100.100.100.0/24
+
+networks:
+  - name: access
+    cidr: 10.10.10.0/24
+    accessible_by_user: true         # the segment trainees reach the console on
+  - name: lab
+    cidr: 10.10.20.0/24
+    accessible_by_user: true         # production-like; controls are tested across it
+
+net_mappings:
+  # ubuntu-ws — both segments
+  - host: ubuntu-ws
+    network: access
+    ip: 10.10.10.4
+  - host: ubuntu-ws
+    network: lab
+    ip: 10.10.20.4
+  # rhel-srv — both segments
+  - host: rhel-srv
+    network: access
+    ip: 10.10.10.5
+  - host: rhel-srv
+    network: lab
+    ip: 10.10.20.5
+  # attacker — both segments
+  - host: attacker
+    network: access
+    ip: 10.10.10.6
+  - host: attacker
+    network: lab
+    ip: 10.10.20.6
+  # logstation — access only (kept off the lab segment so the F1 dataset cannot be altered)
+  - host: logstation
+    network: access
+    ip: 10.10.10.7
+  # ubuntu-ref — both segments
+  - host: ubuntu-ref
+    network: access
+    ip: 10.10.10.8
+  - host: ubuntu-ref
+    network: lab
+    ip: 10.10.20.7
+
+router_mappings:
+  - router: r-access
+    network: access
+    ip: 10.10.10.1
+  - router: r-lab
+    network: lab
+    ip: 10.10.20.1
+
+groups:
+  - name: targets              # every host hardened and/or scanned in the course
+    nodes:
+      - ubuntu-ws
+      - rhel-srv
+      - ubuntu-ref
+  - name: hardening-targets    # the two hosts the learner hardens and that ship with the
+    nodes:                     # seeded findings; excludes ubuntu-ref, kept at defaults
+      - ubuntu-ws
+      - rhel-srv
+  - name: ubuntu-targets       # apt-based targets
+    nodes:
+      - ubuntu-ws
+      - ubuntu-ref
+  - name: rhel-targets         # dnf-based target
+    nodes:
+      - rhel-srv
+  - name: attacker
+    nodes:
+      - attacker
+  - name: logstation
+    nodes:
+      - logstation
+  # Reserved group, populated by membership only (never redefined):
+  - name: monitor-os
+    nodes:
+      - ubuntu-ws
+      - rhel-srv
+      - ubuntu-ref
+      - attacker
+      - logstation
+
+monitoring_targets:
+  - node: ubuntu-ws
+    targets:
+      - port: 22
+        interface: access
+  - node: rhel-srv
+    targets:
+      - port: 22
+        interface: access
+  - node: ubuntu-ref
+    targets:
+      - port: 22
+        interface: access
+  - node: attacker
+    targets:
+      - port: 22
+        interface: access
+  - node: logstation
+    targets:
+      - port: 22
+        interface: access
+      - port: 514              # rsyslog receiver for the C1 off-host forwarding
+        interface: access

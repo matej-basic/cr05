@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  role_name: attacker_tools
+  description: Installs nmap, hydra, netcat, curl, tcpdump on the CR-05 test client.
+  license: MIT
+  min_ansible_version: "2.14"
+dependencies: []

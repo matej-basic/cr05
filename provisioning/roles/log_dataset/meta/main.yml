@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  role_name: log_dataset
+  description: Seeds the F1 incident dataset and the C1 off-host rsyslog receiver.
+  license: MIT
+  min_ansible_version: "2.14"
+dependencies: []

@@ -1,0 +1,4 @@
+---
+hostname: ubuntu-ref
+# The unhardened reference host scanned in lab E1. It owns no verification script.
+verify_labs: []

@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  role_name: passkeys
+  description: Passkey files, Verify-Lab*.sh scripts, and the read-only cross-host probe.
+  license: MIT
+  min_ansible_version: "2.14"
+dependencies: []

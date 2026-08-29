@@ -1,0 +1,21 @@
+---
+common_packages_debian:
+  - sudo
+  - openssh-server
+  - auditd
+  - aide
+  - rsyslog
+  - nftables
+  - policycoreutils        # for reference; AppArmor is the Ubuntu MAC layer
+  - libpam-modules
+  - libpam-pwquality
+common_packages_rhel:
+  - sudo
+  - openssh-server
+  - audit
+  - aide
+  - rsyslog
+  - firewalld
+  - nftables
+  - libpwquality
+  - pam

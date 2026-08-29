@@ -1,0 +1,19 @@
+---
+# Ansible dependencies the platform installs before running playbook.yml.
+#
+# Mirrors cr06 and cr08, minus the Windows half: CR-05 is Linux-only, so
+# `ansible.windows`, `microsoft.ad`, and `ansible-role-user-access-windows`
+# are deliberately absent.
+#
+# `ansible-role-user-access` is the Cyber Range platform's own role for stage 3
+# (user provisioning), which injects the trainee's SSH key onto the management
+# user. The playbook here creates the engineer/analyst lab accounts itself; this
+# role is a separate concern and is what the platform applies.
+
+collections: []
+
+roles:
+  - name: ansible-role-user-access
+    src: https://github.com/cyberrangecz/ansible-role-user-access
+    scm: git
+    version: v1.0.0

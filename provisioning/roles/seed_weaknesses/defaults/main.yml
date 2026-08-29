@@ -1,0 +1,7 @@
+---
+# Tunables for the seeded findings. Account names and passwords come from group_vars/all.yml.
+seed_suid_shell_path: /usr/local/bin/maint-shell
+seed_world_writable_script: /usr/local/sbin/larkfield-maint.sh
+seed_world_writable_dirs:
+  - /srv/shared
+  - /opt/dropbox

@@ -1,0 +1,3 @@
+---
+# No handlers: the common role changes no service configuration. Service state is set
+# directly with idempotent service tasks. Config-changing roles carry their own handlers.

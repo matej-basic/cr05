@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  role_name: seed_weaknesses
+  description: Introduces the deliberate misconfigurations the CR-05 labs remediate.
+  license: MIT
+  min_ansible_version: "2.14"
+dependencies: []

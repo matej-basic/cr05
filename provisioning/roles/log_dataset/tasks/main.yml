@@ -1,0 +1,67 @@
+---
+# logstation carries two things:
+#   1. The pre-collected incident dataset that lab F1 reconstructs (/var/log/collected/).
+#      It is seeded read-only and the host sits off the lab segment, so nothing the learner
+#      does to the targets can alter it.
+#   2. A live rsyslog receiver (/var/log/remote/) that lab C1 forwards a copy of the target
+#      logs to, which is a different data path from the F1 dataset.
+#
+# The F1 dataset is built around one root cause: a brute-force SSH attack that succeeded
+# because the account had no lockout (the pam_faillock control from lab B1). It then shows
+# a sudo/SUID escalation and audited config changes, tagged with the lab C1 audit keys
+# (scope, identity, privileged) so the learner retrieves them by key.
+
+- name: Create the collected-dataset directory (read-only evidence)
+  ansible.builtin.file:
+    path: "{{ collected_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Seed the authentication log (brute force, then a success with no lockout)
+  ansible.builtin.template:
+    src: auth.log.j2
+    dest: "{{ collected_dir }}/auth.log"
+    owner: root
+    group: root
+    mode: "0440"
+
+- name: Seed the audit log (escalation and config changes, keyed for retrieval)
+  ansible.builtin.template:
+    src: audit.log.j2
+    dest: "{{ collected_dir }}/audit.log"
+    owner: root
+    group: root
+    mode: "0440"
+
+- name: Provide the report templates the F1 briefing refers to
+  ansible.builtin.copy:
+    dest: "{{ collected_dir }}/README.txt"
+    content: |
+      Incident dataset for lab F1. Read-only.
+      Reconstruct the timeline into /root/incident/timeline.txt and write a structured
+      summary into /root/incident/summary.txt. State the root cause: which hardening
+      control, had it been in place, would have stopped the intrusion at the front door.
+      Retrieve the audited events by key: scope, identity, privileged.
+    owner: root
+    group: root
+    mode: "0444"
+
+# --- Live off-host receiver for the C1 forwarding step --------------------------------
+- name: Create the remote-log receiver directory
+  ansible.builtin.file:
+    path: "{{ remote_log_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Configure rsyslog to receive forwarded logs on 514
+  ansible.builtin.template:
+    src: 10-remote-receiver.conf.j2
+    dest: /etc/rsyslog.d/10-remote-receiver.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart rsyslog

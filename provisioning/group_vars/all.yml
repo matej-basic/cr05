@@ -1,0 +1,24 @@
+---
+# Shared configuration for every node.
+
+scripts_dir: /opt/scripts
+
+# Trainee accounts. Passwords default to the values documented in
+# cr05/training_definition.json. If APG randomization is enabled for them
+# (see variables.yml), the platform must re-inject the generated value.
+engineer_user: engineer
+engineer_password: "Password123!"
+analyst_user: analyst
+analyst_password: "Password123!"
+
+# svc_app: the RHEL service account carrying the seeded weak sudo rule (lab B1/D1).
+# Randomized by APG; falls back to this default when APG is not wired in.
+svc_app_user: svc_app
+svc_app_password: "{{ svc_app_password | default('svc-app-change-me') }}"
+
+# larkfield-app: the service the rewritten sudo rule references (lab B1).
+larkfield_app_service: larkfield-app
+
+# secure_user: owner of /home/secure_user, where the B1 passkey file lives.
+secure_user: secure_user
+secure_user_password: "{{ secure_user_password | default('secure-user-change-me') }}"

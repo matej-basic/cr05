@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  role_name: common
+  description: Base configuration, trainee accounts, and assumed packages for CR-05.
+  license: MIT
+  min_ansible_version: "2.14"
+dependencies: []

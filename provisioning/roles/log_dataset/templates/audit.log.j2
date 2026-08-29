@@ -1,0 +1,11 @@
+{# F1 dataset: auditd records tagged with the lab C1 audit keys so the learner
+   retrieves them with `ausearch -k <key>`. identity = who, privileged = escalation,
+   scope = what changed. #}
+type=USER_AUTH msg=audit(1710184471.221:812): pid=20449 uid=0 auid=1001 ses=7 msg='op=PAM:authentication acct="engineer" exe="/usr/sbin/sshd" hostname={{ attacker_lab_ip }} addr={{ attacker_lab_ip }} terminal=ssh res=success' key="identity"
+type=USER_CMD msg=audit(1710184502.004:840): pid=20512 uid=1001 auid=1001 ses=7 msg='cwd="/home/engineer" cmd=2F7573722F6C6F63616C2F62696E2F6D61696E742D7368656C6C terminal=pts/1 res=success' key="privileged"
+type=SYSCALL msg=audit(1710184502.010:841): arch=c000003e syscall=59 success=yes exit=0 a0=... uid=1001 auid=1001 euid=0 comm="maint-shell" exe="/usr/local/bin/maint-shell" key="privileged"
+type=SYSCALL msg=audit(1710184585.117:902): arch=c000003e syscall=257 success=yes exit=3 uid=0 auid=1001 euid=0 comm="vi" exe="/usr/bin/vi" name="/etc/sudoers.d/svc_app" key="scope"
+type=PATH msg=audit(1710184585.117:902): item=0 name="/etc/sudoers.d/svc_app" mode=0100440 ouid=0 ogid=0 key="scope"
+type=SYSCALL msg=audit(1710184611.443:915): arch=c000003e syscall=257 success=yes exit=4 uid=0 auid=1001 euid=0 comm="sed" exe="/usr/bin/sed" name="/etc/ssh/sshd_config" key="scope"
+type=PATH msg=audit(1710184611.443:915): item=0 name="/etc/ssh/sshd_config" mode=0100644 ouid=0 ogid=0 key="scope"
+type=USER_ACCT msg=audit(1710184640.882:930): pid=20620 uid=0 auid=1001 ses=7 msg='op=PAM:accounting acct="engineer" exe="/usr/bin/sudo" res=success' key="identity"

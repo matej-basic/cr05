@@ -1,0 +1,17 @@
+{# F1 dataset: SSH brute force from the attacker client that succeeds because the
+   engineer account had no lockout policy (the missing pam_faillock control from B1). #}
+Mar 11 21:14:02 rhel-srv sshd[20431]: Failed password for engineer from {{ attacker_lab_ip }} port 51012 ssh2
+Mar 11 21:14:05 rhel-srv sshd[20431]: Failed password for engineer from {{ attacker_lab_ip }} port 51012 ssh2
+Mar 11 21:14:08 rhel-srv sshd[20433]: Failed password for engineer from {{ attacker_lab_ip }} port 51018 ssh2
+Mar 11 21:14:11 rhel-srv sshd[20433]: Failed password for engineer from {{ attacker_lab_ip }} port 51018 ssh2
+Mar 11 21:14:14 rhel-srv sshd[20437]: Failed password for engineer from {{ attacker_lab_ip }} port 51024 ssh2
+Mar 11 21:14:17 rhel-srv sshd[20437]: Failed password for engineer from {{ attacker_lab_ip }} port 51024 ssh2
+Mar 11 21:14:20 rhel-srv sshd[20441]: Failed password for engineer from {{ attacker_lab_ip }} port 51030 ssh2
+Mar 11 21:14:23 rhel-srv sshd[20441]: Failed password for engineer from {{ attacker_lab_ip }} port 51030 ssh2
+Mar 11 21:14:26 rhel-srv sshd[20445]: Failed password for engineer from {{ attacker_lab_ip }} port 51036 ssh2
+Mar 11 21:14:29 rhel-srv sshd[20445]: Failed password for engineer from {{ attacker_lab_ip }} port 51036 ssh2
+Mar 11 21:14:31 rhel-srv sshd[20449]: Accepted password for engineer from {{ attacker_lab_ip }} port 51042 ssh2
+Mar 11 21:14:31 rhel-srv sshd[20449]: pam_unix(sshd:session): session opened for user engineer(uid=1001) by (uid=0)
+Mar 11 21:15:02 rhel-srv sudo:  engineer : TTY=pts/1 ; PWD=/home/engineer ; USER=root ; COMMAND=/usr/local/bin/maint-shell
+Mar 11 21:15:02 rhel-srv sudo: pam_unix(sudo:session): session opened for user root(uid=0) by engineer(uid=1001)
+Mar 11 21:17:44 rhel-srv sshd[20449]: pam_unix(sshd:session): session closed for user engineer

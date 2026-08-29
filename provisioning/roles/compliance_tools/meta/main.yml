@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  role_name: compliance_tools
+  description: Installs OpenSCAP and SCAP Security Guide (CIS-aligned, freely redistributable).
+  license: MIT
+  min_ansible_version: "2.14"
+dependencies: []

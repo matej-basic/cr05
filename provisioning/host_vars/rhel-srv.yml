@@ -1,0 +1,10 @@
+---
+hostname: rhel-srv
+# Labs whose Lab Completion names rhel-srv as the host to run the script on.
+verify_labs:
+  - b1
+  - d1
+  - e1
+# Peer host that the cross-host checks in B1 reach over SSH.
+verify_peer_host: ubuntu-ws
+verify_peer_ip: 10.10.10.4

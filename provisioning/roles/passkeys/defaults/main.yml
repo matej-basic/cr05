@@ -1,0 +1,22 @@
+---
+# Lab -> passkey path and literal answer string. The values MUST stay identical to the
+# `answer` fields in cr05/training_definition.json and the next ACCESS level's `passkey`.
+lab_passkeys:
+  a1:
+    path: /secure/hardening/passkey.txt
+    value: cr05-a1-baseline-hardened
+  b1:
+    path: /home/secure_user/passkey.txt
+    value: cr05-b1-auth-hardened
+  c1:
+    path: /secure/audit/passkey.txt
+    value: cr05-c1-logging-verified
+  d1:
+    path: /root/secure_passkey.txt
+    value: cr05-d1-escalation-remediated
+  e1:
+    path: /secure/compliance/passkey.txt
+    value: cr05-e1-compliance-validated
+  f1:
+    path: /analysis/incident_passkey.txt
+    value: cr05-f1-incident-reconstructed

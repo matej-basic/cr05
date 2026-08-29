@@ -1,0 +1,53 @@
+---
+# Base configuration shared by every node: hostname, trainee accounts, scripts dir,
+# and the packages the labs assume are present. Nothing here hardens the system.
+
+- name: Set the hostname
+  ansible.builtin.hostname:
+    name: "{{ hostname | default(inventory_hostname) }}"
+  when: hostname is defined
+
+- name: Ensure the scripts directory exists
+  ansible.builtin.file:
+    path: "{{ scripts_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Create the engineer account (admin on the three Linux hosts)
+  ansible.builtin.user:
+    name: "{{ engineer_user }}"
+    password: "{{ engineer_password | password_hash('sha512') }}"
+    shell: /bin/bash
+    groups: "{{ 'sudo' if ansible_os_family == 'Debian' else 'wheel' }}"
+    append: true
+    state: present
+  when: "'attacker' not in group_names"
+
+- name: Create the analyst account on the attacker client
+  ansible.builtin.user:
+    name: "{{ analyst_user }}"
+    password: "{{ analyst_password | password_hash('sha512') }}"
+    shell: /bin/bash
+    state: present
+  when: "'attacker' in group_names"
+
+- name: Install the base packages the labs assume (Debian family)
+  ansible.builtin.apt:
+    name: "{{ common_packages_debian }}"
+    state: present
+    update_cache: true
+  when: ansible_os_family == 'Debian'
+
+- name: Install the base packages the labs assume (RHEL family)
+  ansible.builtin.dnf:
+    name: "{{ common_packages_rhel }}"
+    state: present
+  when: ansible_os_family == 'RedHat'
+
+- name: Ensure the SSH server is enabled and running (unhardened; labs B1/C1 harden it)
+  ansible.builtin.service:
+    name: "{{ 'ssh' if ansible_os_family == 'Debian' else 'sshd' }}"
+    state: started
+    enabled: true

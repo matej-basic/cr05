@@ -1,0 +1,119 @@
+---
+# Seed the exact findings the labs remediate. This role only WEAKENS the two hardening
+# targets; it never hardens. Every item here maps to a check in a Verify-Lab*.sh script,
+# so the passkey cannot print until the learner has actually fixed the finding.
+#
+# Runs on group hardening-targets (ubuntu-ws, rhel-srv). ubuntu-ref is excluded so it
+# stays at plain distribution defaults as the E1 comparison host.
+
+# --- Remote access: root login permitted, no idle timeout (labs A1/B1 fix) ------------
+- name: Permit direct root login over SSH (finding; B1 sets this to no)
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^\s*#?\s*PermitRootLogin'
+    line: "PermitRootLogin yes"
+    validate: "/usr/sbin/sshd -t -f %s"
+  notify: restart ssh
+
+- name: Leave the SSH idle timeout unset (finding; B1 adds ClientAliveInterval)
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^\s*ClientAliveInterval'
+    state: absent
+    validate: "/usr/sbin/sshd -t -f %s"
+  notify: restart ssh
+
+# --- Filesystem: /tmp mounted without nodev/nosuid/noexec (lab A1 fixes) ---------------
+- name: Seed a /tmp mount that lacks the hardening options
+  ansible.builtin.mount:
+    path: /tmp
+    src: tmpfs
+    fstype: tmpfs
+    opts: "defaults"          # no nodev, nosuid, or noexec: the A1 finding
+    state: mounted
+
+- name: Create world-writable directories outside /tmp (finding)
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0777"
+  loop:
+    - /srv/shared
+    - /opt/dropbox
+
+# --- Kernel: unused modules loadable (lab A1 blocks them) ------------------------------
+- name: Ensure no module block-list exists at the start (A1 adds one)
+  ansible.builtin.file:
+    path: /etc/modprobe.d/cadmus-blocklist.conf
+    state: absent
+
+# --- Privilege escalation path on rhel-srv (labs B1 and D1) ----------------------------
+- name: Create the svc_app service account (rhel-srv)
+  ansible.builtin.user:
+    name: "{{ svc_app_user }}"
+    password: "{{ svc_app_password | password_hash('sha512') }}"
+    shell: /bin/bash
+    system: false
+    state: present
+  when: inventory_hostname == 'rhel-srv'
+
+- name: Seed the over-broad svc_app sudo rule (B1 tightens it; D1 confirms)
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/svc_app
+    content: |
+      # Added during an incident and never removed. Grants far more than the
+      # larkfield-app service needs. Lab B1 replaces this with a least-privilege rule.
+      {{ svc_app_user }} ALL=(ALL) NOPASSWD: ALL
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "/usr/sbin/visudo -cf %s"
+  when: inventory_hostname == 'rhel-srv'
+
+- name: Seed an unsafe SUID-root shell as an escalation path (D1 removes it)
+  ansible.builtin.copy:
+    src: "{{ '/usr/bin/bash' if ansible_os_family == 'RedHat' else '/bin/bash' }}"
+    dest: /usr/local/bin/maint-shell
+    remote_src: true
+    owner: root
+    group: root
+    mode: "04755"
+  when: inventory_hostname == 'rhel-srv'
+
+- name: Seed a world-writable script on a root-trusted path (D1 tightens it)
+  ansible.builtin.copy:
+    dest: /usr/local/sbin/larkfield-maint.sh
+    content: |
+      #!/bin/bash
+      # Run from root cron. World-writable at the start: any user can edit what root runs.
+      logger -t larkfield-maint "maintenance sweep $(date -Is)"
+    owner: root
+    group: root
+    mode: "0777"
+  when: inventory_hostname == 'rhel-srv'
+
+- name: Reference the world-writable script from a root cron entry
+  ansible.builtin.cron:
+    name: larkfield-maint
+    minute: "*/15"
+    user: root
+    job: "/usr/local/sbin/larkfield-maint.sh"
+  when: inventory_hostname == 'rhel-srv'
+
+- name: Ensure the larkfield-app unit exists so the tightened B1 sudo rule has a target
+  ansible.builtin.copy:
+    dest: "/etc/systemd/system/{{ larkfield_app_service }}.service"
+    content: |
+      [Unit]
+      Description=Larkfield demo application (placeholder target for the svc_app sudo rule)
+      [Service]
+      Type=oneshot
+      ExecStart=/bin/true
+      RemainAfterExit=yes
+      [Install]
+      WantedBy=multi-user.target
+    owner: root
+    group: root
+    mode: "0644"
+  when: inventory_hostname == 'rhel-srv'
+  notify: reload systemd

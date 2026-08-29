@@ -1,0 +1,56 @@
+---
+# Compliance scanning tools for the scan targets (ubuntu-ws, rhel-srv, ubuntu-ref).
+#
+# LICENCE NOTE: CIS-CAT Assessor is licence-gated and must never be downloaded or
+# redistributed from this repository. This role installs OpenSCAP and the SCAP Security
+# Guide instead: both are freely redistributable and ship CIS-aligned profiles. The lab
+# text names "CIS-CAT Assessor"; a trainer who holds a CIS-CAT licence drops the Assessor
+# bundle into {{ cis_cat_hook_dir }} and it is used in place of oscap. Nothing is fetched
+# here.
+
+- name: Install OpenSCAP and SCAP content (Debian family)
+  ansible.builtin.apt:
+    name: "{{ scap_packages_debian }}"
+    state: present
+    update_cache: true
+  when: ansible_os_family == 'Debian'
+
+- name: Install OpenSCAP and SCAP content (RHEL family)
+  ansible.builtin.dnf:
+    name: "{{ scap_packages_rhel }}"
+    state: present
+  when: ansible_os_family == 'RedHat'
+
+- name: Create the report output directory the labs write scans into
+  ansible.builtin.file:
+    path: "{{ compliance_report_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Create the hook directory for a trainer-supplied CIS-CAT Assessor
+  ansible.builtin.file:
+    path: "{{ cis_cat_hook_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Leave a README explaining the CIS-CAT hook and the OpenSCAP default
+  ansible.builtin.copy:
+    dest: "{{ cis_cat_hook_dir }}/README.txt"
+    content: |
+      CIS-CAT Assessor is licence-gated and is NOT shipped with this sandbox.
+      OpenSCAP (oscap) with the SCAP Security Guide is installed and is the working
+      scanner for the compliance labs. To use CIS-CAT instead, place a licensed
+      Assessor bundle in this directory; the lab guide explains how to run it.
+
+      Example OpenSCAP run (RHEL CIS profile):
+        oscap xccdf eval --profile <cis_profile_id> \
+          --results {{ compliance_report_dir }}/scan-$(date +%F).xml \
+          --report  {{ compliance_report_dir }}/scan-$(date +%F).html \
+          {{ scap_content_hint }}
+    owner: root
+    group: root
+    mode: "0644"

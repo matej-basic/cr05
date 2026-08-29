@@ -1,0 +1,16 @@
+---
+compliance_report_dir: /secure/compliance
+cis_cat_hook_dir: /opt/cis-cat
+
+# OpenSCAP scanner plus SCAP Security Guide content. Package names differ by distro;
+# these are the freely redistributable packages, never CIS-CAT.
+scap_packages_debian:
+  - openscap-scanner
+  - ssg-base
+  - ssg-debderived
+scap_packages_rhel:
+  - openscap-scanner
+  - scap-security-guide
+
+# Where the SSG datastream lands, used only in the README example command.
+scap_content_hint: "/usr/share/xml/scap/ssg/content/ (pick the ssg-*-ds.xml for this host)"
