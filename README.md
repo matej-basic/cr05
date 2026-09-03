@@ -58,9 +58,17 @@ script, so a cross-host check needs no password and grants no writable privilege
    until 1 Sep 2026, when `rocky-9.8-min-x86_64` was loaded, and `topology.yml` now names it.
    Rocky 9 is binary-compatible with RHEL 9 and needs no subscription, and the labs use no
    `subscription-manager`. The host keeps the name `rhel-srv`, which the labs, the passkey
-   scripts and `training_definition.json` all address it by. `mgmt_user` is `rocky`, the Rocky
-   cloud-image default; the catalogue leaves its Default User column blank for every image, so
-   provisioning is where that value is confirmed.
+   scripts and `training_definition.json` all address it by, and `mgmt_user` is `rocky`, the
+   Rocky cloud-image default.
+
+   **Still blocked as of 4 Sep 2026.** That image was built from the Rocky 9.8 minimal
+   *installation* ISO, and the Minimal Install group omits `cloud-init`. Without it the
+   instance never reads the OpenStack metadata, so no default user is created and the injected
+   SSH key is never written: provisioning stage 2 cannot reach the host (ssh return code 255)
+   whatever `mgmt_user` says, while the four Ubuntu hosts on the same segment connect normally.
+   The image has to be rebuilt from `Rocky-9-GenericCloud-Base.latest.x86_64.qcow2`, which
+   ships cloud-init enabled with `rocky` as its default user. `mgmt_user` is already correct
+   for that image.
 2. **CIS-CAT is licence-gated.** `roles/compliance_tools` installs OpenSCAP and the SCAP
    Security Guide (freely redistributable, CIS-aligned) and leaves a hook directory
    (`/opt/cis-cat`) for a trainer-supplied CIS-CAT Assessor. Nothing CIS-licensed is

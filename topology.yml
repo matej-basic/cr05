@@ -29,9 +29,18 @@ hosts:
     # Rocky 9 is binary-compatible with RHEL 9 and needs no subscription, and the labs use no
     # `subscription-manager`. The host name stays `rhel-srv` because the labs, the passkey
     # scripts and `training_definition.json` all address it by that name.
-    # `mgmt_user` is the Rocky cloud-image default (`rocky`); the platform image catalogue
-    # leaves its Default User column blank for every image, so this is confirmed at
-    # provisioning stage 2/3 rather than from the catalogue.
+    # `mgmt_user` is the Rocky cloud-image default (`rocky`).
+    #
+    # BLOCKED as of 4 Sep 2026: the loaded `rocky-9.8-min-x86_64` was built from the Rocky
+    # 9.8 minimal *installation* ISO, whose package group omits `cloud-init`. Without it the
+    # instance never reads the OpenStack metadata, so no default user is created and the
+    # injected SSH key is never written, and provisioning stage 2 cannot reach this host
+    # (ssh return code 255) whatever `mgmt_user` says. The four Ubuntu hosts on the same
+    # segment connect normally, so the network and the keypair are fine.
+    #   Fix: the image has to be rebuilt from Rocky-9-GenericCloud-Base.latest.x86_64.qcow2,
+    #   which ships cloud-init enabled with `rocky` as its default user. `mgmt_user` below is
+    #   already correct for that image; only `image` changes, and only if the rebuild is
+    #   registered under a different name.
     base_box:
       image: rocky-9.8-min-x86_64
       mgmt_user: rocky
