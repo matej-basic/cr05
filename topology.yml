@@ -23,20 +23,18 @@ hosts:
     flavor: standard.medium          # primary hardening target; runs the scanner
 
   - name: rhel-srv
-    # IMAGE REQUEST REQUIRED. As of 14 Aug 2026 the platform image catalogue holds NO
-    # Red Hat-family image (no RHEL, Rocky, or Alma). This host must be Red Hat-family 9:
-    # the course exercises it hands-on with `firewall-cmd`/`firewalld` and `dnf` (lab C1)
-    # and teaches SELinux enforcing mode on it (node N2), none of which exist on Ubuntu.
-    # An Ubuntu substitute would break labs C1 and the N2/N5 two-distro material.
-    #   Recommended: request Rocky Linux 9 or AlmaLinux 9 (binary-compatible with RHEL 9,
-    #   no subscription needed; the labs use no subscription-manager). Request genuine
-    #   RHEL 9 only if RHEL branding is wanted.
-    # ACTION: once the image is loaded, set `image` below to its exact registered name
-    #   (e.g. rocky-9-x86_64, almalinux-9-x86_64, or rhel-9-x86_64) and, for a non-RHEL
-    #   image, set `mgmt_user` to that cloud image's default user (rocky / almalinux).
+    # Red Hat-family 9 host. The course exercises it hands-on with `firewall-cmd`/`firewalld`
+    # and `dnf` (lab C1) and teaches SELinux enforcing mode on it (node N2), so an Ubuntu
+    # substitute is not possible. The platform loaded `rocky-9.8-min-x86_64` on 1 Sep 2026;
+    # Rocky 9 is binary-compatible with RHEL 9 and needs no subscription, and the labs use no
+    # `subscription-manager`. The host name stays `rhel-srv` because the labs, the passkey
+    # scripts and `training_definition.json` all address it by that name.
+    # `mgmt_user` is the Rocky cloud-image default (`rocky`); the platform image catalogue
+    # leaves its Default User column blank for every image, so this is confirmed at
+    # provisioning stage 2/3 rather than from the catalogue.
     base_box:
-      image: rhel-9-x86_64           # placeholder: replace with the loaded Red Hat-family 9 image name
-      mgmt_user: cloud-user          # RHEL/Rocky/Alma cloud default is cloud-user (rocky/almalinux on some builds)
+      image: rocky-9.8-min-x86_64
+      mgmt_user: rocky
       mgmt_protocol: ssh
     flavor: standard.medium
 

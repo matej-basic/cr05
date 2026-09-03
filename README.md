@@ -52,14 +52,15 @@ script, so a cross-host check needs no password and grants no writable privilege
 
 ## Deviations and decisions (also in the build report)
 
-1. **`rhel-srv` needs a Red Hat-family 9 image that the platform does not yet have.** As of
-   14 Aug 2026 the image catalogue holds no RHEL, Rocky, or Alma. This is a hard requirement,
-   not a nicety: lab C1 runs `firewall-cmd`/`firewalld` and `dnf` on this host, and node N2
-   teaches SELinux enforcing mode on it, none of which exist on Ubuntu. Recommended request:
-   **Rocky Linux 9** or **AlmaLinux 9** (binary-compatible with RHEL 9, no subscription; the
-   labs use no `subscription-manager`); genuine RHEL 9 only if RHEL branding is wanted. Once
-   loaded, set `topology.yml`'s `rhel-srv` `image` to the exact registered name and, for a
-   non-RHEL image, `mgmt_user` to that image's default user.
+1. **`rhel-srv` runs Rocky Linux 9, not RHEL 9.** The host has to be Red Hat-family: lab C1
+   runs `firewall-cmd`/`firewalld` and `dnf` on it, and node N2 teaches SELinux enforcing mode
+   on it, none of which exist on Ubuntu. The platform catalogue held no Red Hat-family image
+   until 1 Sep 2026, when `rocky-9.8-min-x86_64` was loaded, and `topology.yml` now names it.
+   Rocky 9 is binary-compatible with RHEL 9 and needs no subscription, and the labs use no
+   `subscription-manager`. The host keeps the name `rhel-srv`, which the labs, the passkey
+   scripts and `training_definition.json` all address it by. `mgmt_user` is `rocky`, the Rocky
+   cloud-image default; the catalogue leaves its Default User column blank for every image, so
+   provisioning is where that value is confirmed.
 2. **CIS-CAT is licence-gated.** `roles/compliance_tools` installs OpenSCAP and the SCAP
    Security Guide (freely redistributable, CIS-aligned) and leaves a hook directory
    (`/opt/cis-cat`) for a trainer-supplied CIS-CAT Assessor. Nothing CIS-licensed is
