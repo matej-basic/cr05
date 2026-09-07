@@ -1,14 +1,28 @@
-# CADMUS CR-05 — Answer Pool Generator (APG) variables
+# CADMUS CR-05 — APG (Answers/variables generator) variables
 #
-# The platform randomizes these per sandbox instance so trainees in a pool cannot copy
-# values from each other. Each entry has a type and a generator (APG contract).
+# SCHEMA: each top-level key is the variable name, and its value is the config mapping.
+# Allowed `type` values are `username`, `password`, `port` and `text`. Constraints
+# (`length`, `min`, `max`, `prohibited`) sit directly under the variable, not nested,
+# and there is no `generator` key. Wrapping these in a `variables:` list makes APG read
+# `config["type"]` on a list and fail the whole user-provisioning stage with
+# `list indices must be integers or slices, not str`.
+#
+# Only variables that provisioning actually consumes belong here. Each one below is
+# injected by the platform and read in exactly one place:
+#   svc_app_password     -> roles/seed_weaknesses/tasks/main.yml (the seeded svc_app
+#                           account on rhel-srv, used by labs B1 and D1)
+#   secure_user_password -> roles/passkeys/tasks/main.yml (owner of /home/secure_user,
+#                           where the B1 passkey file lives)
+# Both have a fallback in the consuming role's defaults/main.yml, so a run without APG
+# still provisions. Do not repeat them in group_vars/all.yml: a variable that refers to
+# itself there raises `recursive loop detected in template string`.
 #
 # DELIBERATELY NOT RANDOMIZED, and therefore NOT listed here:
 #
 #   * The six passkeys. Each is a fixed literal that must match the `answer` field in
 #     cr05/training_definition.json and the next ACCESS level's `passkey`:
-#       A1 cr05-a1-baseline-hardened   B1 cr05-b1-auth-hardened
-#       C1 cr05-c1-logging-verified    D1 cr05-d1-escalation-remediated
+#       A1 cr05-a1-baseline-hardened    B1 cr05-b1-auth-hardened
+#       C1 cr05-c1-logging-verified     D1 cr05-d1-escalation-remediated
 #       E1 cr05-e1-compliance-validated F1 cr05-f1-incident-reconstructed
 #     Randomizing them would break the passkey chain. Anti-copy protection comes from the
 #     fact that the Verify-Lab*.sh script only prints the value after the lab's controls
@@ -16,33 +30,13 @@
 #
 #   * engineer / analyst login passwords. training_definition.json documents these as
 #     engineer/Password123! (the three Linux hosts) and analyst/Password123! (attacker).
-#     They default to Password123! in provisioning/group_vars/all.yml to match. If the
-#     platform enables APG randomization for them, it must re-inject the generated value
-#     into the trainee's credential view, or the documented credentials stop matching.
+#     They are set in provisioning/group_vars/all.yml to match. Randomizing them would
+#     make the documented credentials stop matching what the trainee is given.
 
-variables:
-  - name: svc_app_password
-    type: string
-    generator: password
-    constraints:
-      length: 16
-      charset: alnum          # the seeded svc_app account on rhel-srv; not documented to
-                              # the trainee, so it is safe and useful to randomize
-  - name: root_password_ubuntu_ws
-    type: string
-    generator: password
-    constraints:
-      length: 20
-      charset: alnum
-  - name: root_password_rhel_srv
-    type: string
-    generator: password
-    constraints:
-      length: 20
-      charset: alnum
-  - name: secure_user_password
-    type: string
-    generator: password
-    constraints:
-      length: 16
-      charset: alnum          # owner of /home/secure_user, where the B1 passkey file lives
+svc_app_password:
+  type: password
+  length: 16
+
+secure_user_password:
+  type: password
+  length: 16

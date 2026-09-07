@@ -1,6 +1,10 @@
 ---
 # Lab -> passkey path and literal answer string. The values MUST stay identical to the
 # `answer` fields in cr05/training_definition.json and the next ACCESS level's `passkey`.
+# Fallback for the APG-injected secure_user password, so a run without APG still
+# provisions. Role defaults are the lowest precedence, so the APG value always wins.
+secure_user_password: secure-user-change-me
+
 lab_passkeys:
   a1:
     path: /secure/hardening/passkey.txt

@@ -1,5 +1,9 @@
 ---
 # Tunables for the seeded findings. Account names and passwords come from group_vars/all.yml.
+# Fallback for the APG-injected svc_app password, so a run without APG still provisions.
+# Role defaults are the lowest precedence, so the APG value always wins.
+svc_app_password: svc-app-change-me
+
 seed_suid_shell_path: /usr/local/bin/maint-shell
 seed_world_writable_script: /usr/local/sbin/larkfield-maint.sh
 seed_world_writable_dirs:

@@ -12,13 +12,15 @@ analyst_user: analyst
 analyst_password: "Password123!"
 
 # svc_app: the RHEL service account carrying the seeded weak sudo rule (lab B1/D1).
-# Randomized by APG; falls back to this default when APG is not wired in.
+# APG injects `svc_app_password` (see ../variables.yml); the fallback for a run without
+# APG lives in roles/seed_weaknesses/defaults/main.yml. It must NOT be repeated here:
+# a variable defined in terms of itself raises `recursive loop detected in template string`.
 svc_app_user: svc_app
-svc_app_password: "{{ svc_app_password | default('svc-app-change-me') }}"
 
 # larkfield-app: the service the rewritten sudo rule references (lab B1).
 larkfield_app_service: larkfield-app
 
 # secure_user: owner of /home/secure_user, where the B1 passkey file lives.
+# APG injects `secure_user_password`; the fallback lives in roles/passkeys/defaults/main.yml,
+# for the same reason as svc_app_password above.
 secure_user: secure_user
-secure_user_password: "{{ secure_user_password | default('secure-user-change-me') }}"
