@@ -15,6 +15,13 @@
     validate: "/usr/sbin/sshd -t -f %s"
   notify: restart ssh
 
+# The RHEL installer drop-in is read before sshd_config and would override B1's PermitRootLogin no.
+- name: Remove the installer drop-in that forces root login (it would override the B1 fix)
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config.d/01-permitrootlogin.conf
+    state: absent
+  notify: restart ssh
+
 - name: Leave the SSH idle timeout unset (finding; B1 adds ClientAliveInterval)
   ansible.builtin.lineinfile:
     path: /etc/ssh/sshd_config

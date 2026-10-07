@@ -8,9 +8,20 @@ scap_packages_debian:
   - openscap-scanner
   - ssg-base
   - ssg-debderived
+  - unzip
 scap_packages_rhel:
   - openscap-scanner
   - scap-security-guide
 
-# Where the SSG datastream lands, used only in the README example command.
-scap_content_hint: "/usr/share/xml/scap/ssg/content/ (pick the ssg-*-ds.xml for this host)"
+# Upstream ComplianceAsCode content for the Debian family. Ubuntu 24.04's ssg-debderived
+# ships only ubuntu2004/ubuntu2204 datastreams, which evaluate nothing on 24.04. Release
+# 0.1.82 (2026-09-01) carries ssg-ubuntu2404-ds.xml with the profiles cis_level1_server,
+# cis_level1_workstation, cis_level2_server, cis_level2_workstation and stig. Only that one
+# datastream is extracted from the zip, and a version-free symlink in ssg_upstream_dir
+# points at it. The checksum is the release's own .sha512 asset.
+ssg_upstream_version: "0.1.82"
+ssg_upstream_url: "https://github.com/ComplianceAsCode/content/releases/download/v{{ ssg_upstream_version }}/scap-security-guide-{{ ssg_upstream_version }}.zip"
+ssg_upstream_checksum: "sha512:1caea418f0a5aaef7025e1655ca45a80942ea87ee832b943644ba6f9991b14a6ac5b35dddcd04b754e1fc8fbdee7b7f394507d24b123e821cca0354dc4e03cfd"
+ssg_upstream_dir: /usr/share/xml/scap/ssg-upstream
+ssg_upstream_datastreams:
+  - ssg-ubuntu2404-ds.xml
