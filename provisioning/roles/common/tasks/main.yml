@@ -7,6 +7,19 @@
     name: "{{ hostname | default(inventory_hostname) }}"
   when: hostname is defined
 
+- name: Read the current timezone
+  ansible.builtin.command: timedatectl show --property=Timezone --value
+  register: current_timezone
+  changed_when: false
+
+# Rocky 9 images default to UTC+3 while the Ubuntu images run UTC, which skews the
+# timestamps lab C1 collects on logstation. community.general is not in requirements.yml,
+# so timedatectl is used directly.
+- name: Set the timezone to UTC on every node
+  ansible.builtin.command: timedatectl set-timezone UTC
+  when: current_timezone.stdout | trim != 'UTC'
+  changed_when: true
+
 - name: Ensure the scripts directory exists
   ansible.builtin.file:
     path: "{{ scripts_dir }}"
@@ -38,12 +51,20 @@
     name: "{{ common_packages_debian }}"
     state: present
     update_cache: true
+  register: pkg_result
+  until: pkg_result is succeeded
+  retries: 5
+  delay: 15
   when: ansible_os_family == 'Debian'
 
 - name: Install the base packages the labs assume (RHEL family)
   ansible.builtin.dnf:
     name: "{{ common_packages_rhel }}"
     state: present
+  register: pkg_result
+  until: pkg_result is succeeded
+  retries: 5
+  delay: 15
   when: ansible_os_family == 'RedHat'
 
 - name: Ensure the SSH server is enabled and running (unhardened; labs B1/C1 harden it)

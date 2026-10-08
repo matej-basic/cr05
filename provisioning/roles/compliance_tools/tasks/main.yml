@@ -14,12 +14,20 @@
     name: "{{ scap_packages_debian }}"
     state: present
     update_cache: true
+  register: pkg_result
+  until: pkg_result is succeeded
+  retries: 5
+  delay: 15
   when: ansible_os_family == 'Debian'
 
 - name: Install OpenSCAP and SCAP content (RHEL family)
   ansible.builtin.dnf:
     name: "{{ scap_packages_rhel }}"
     state: present
+  register: pkg_result
+  until: pkg_result is succeeded
+  retries: 5
+  delay: 15
   when: ansible_os_family == 'RedHat'
 
 - name: Check for the upstream Ubuntu 24.04 datastream (Debian family)
@@ -50,8 +58,8 @@
         mode: "0644"
         timeout: 120
       register: ssg_upstream_zip
-      retries: 3
-      delay: 10
+      retries: 5
+      delay: 15
       until: ssg_upstream_zip is succeeded
 
     - name: Extract only the needed datastreams from the release
@@ -112,7 +120,7 @@
         oscap xccdf eval --profile cis_server_l1 \
           --results {{ compliance_report_dir }}/scan-$(date +%F)-1.xml \
           --report  {{ compliance_report_dir }}/scan-$(date +%F)-1.html \
-          /usr/share/xml/scap/ssg/content/ssg-rhel9-ds.xml
+          /usr/share/xml/scap/ssg/content/ssg-rl9-ds.xml
 
       Example OpenSCAP run on Ubuntu 24.04 (upstream content, CIS Level 1 Server):
         oscap xccdf eval --profile cis_level1_server \

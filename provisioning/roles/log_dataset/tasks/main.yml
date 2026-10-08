@@ -49,12 +49,13 @@
     mode: "0444"
 
 # --- Live off-host receiver for the C1 forwarding step --------------------------------
+# rsyslog drops privileges to syslog:adm, so the receiver directory must be writable by it.
 - name: Create the remote-log receiver directory
   ansible.builtin.file:
     path: "{{ remote_log_dir }}"
     state: directory
-    owner: root
-    group: root
+    owner: syslog
+    group: adm
     mode: "0755"
 
 - name: Configure rsyslog to receive forwarded logs on 514
