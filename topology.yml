@@ -20,7 +20,7 @@ hosts:
       image: ubuntu-noble-x86_64
       mgmt_user: ubuntu
       mgmt_protocol: ssh
-    flavor: standard.medium          # primary hardening target; runs the scanner
+    flavor: c2_r4_d20                # primary hardening target; runs the scanner
 
   - name: rhel-srv
     # Red Hat-family 9 host. The course exercises it hands-on with `firewall-cmd`/`firewalld`
@@ -31,21 +31,14 @@ hosts:
     # scripts and `training_definition.json` all address it by that name.
     # `mgmt_user` is the Rocky cloud-image default (`rocky`).
     #
-    # BLOCKED as of 4 Sep 2026: the loaded `rocky-9.8-min-x86_64` was built from the Rocky
-    # 9.8 minimal *installation* ISO, whose package group omits `cloud-init`. Without it the
-    # instance never reads the OpenStack metadata, so no default user is created and the
-    # injected SSH key is never written, and provisioning stage 2 cannot reach this host
-    # (ssh return code 255) whatever `mgmt_user` says. The four Ubuntu hosts on the same
-    # segment connect normally, so the network and the keypair are fine.
-    #   Fix: the image has to be rebuilt from Rocky-9-GenericCloud-Base.latest.x86_64.qcow2,
-    #   which ships cloud-init enabled with `rocky` as its default user. `mgmt_user` below is
-    #   already correct for that image; only `image` changes, and only if the rebuild is
-    #   registered under a different name.
+    # RESOLVED 7 Sep 2026: the platform rebuilt `rocky-9.8-min-x86_64` with cloud-init under the
+    # same name. The image now reads the OpenStack metadata, creates the default user `rocky`
+    # and writes the injected SSH key, so provisioning stage 2 reaches this host.
     base_box:
       image: rocky-9.8-min-x86_64
       mgmt_user: rocky
       mgmt_protocol: ssh
-    flavor: standard.medium
+    flavor: c2_r4_d20
 
   - name: ubuntu-ref
     base_box:
